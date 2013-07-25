@@ -1,13 +1,41 @@
 # MySQL Replication Project
 This module configures a SQL database(s) in slave or master replication configuration.
 
-## Overview
-### Puppet Dependancies:
+## Replication Module Overview
+#### Puppet Dependancies:
+
 	Puppetlabs MySQL Module
 	Puppetlabs Arguas Module
 	Puppetlabs stdlib
 	Jeff Malnick's hella awesome replication module
 
+#### Compliant!
+Module leverages a defined type class for either 'slave' or 'master' configuration. 
+
+Compliant with puppet 2.7x and MySQL 5.1x (uses CHANGE MASTER TO not 'master-host' definitions in my.cnf)
+
+#### /etc/hosts config
+The alias, IP and FQDN variables for slave and master settings are for updates to the /etc/hosts file. Add these variables if you'd like your /etc/hosts to be automatically updated with network DNS information for your master-slave relationship, otherwise leave out. 
+
+#### my.cnf configuration
+Currently using a template located in /files but will be moving out into /templates once I build out the ERB definitions. Will accept server_id and mysql_database
+from the 'replicate' module and server settings from mysql::params update based on $type. Right now it's a straight up file, edit at will if needed, located in /replicate/files
+
+#### Multi-SQL Capable
+Declare as many instances of replicate::slave or replicate::master as you'd like. 
+
+#### Apparmor
+If you use apparmor be forewarned this will disable it. 
+
+I do have a section you can comment out in the slave.pp file to sed paths into the apparmor usr.bin.mysqld file in apparmor.d/ but I could not get this to work.
+Since this is was developed for a production server and we don't use apparmor I disabled it all together. If you do get this working somehow (I could not even after getting the 
+correct paths and permissions into the usr.bin.mysqld file) let me know so I can add it into the repo. 
+
+#### Notes
+Dev was done on an Ubuntu 12.04 box. 
+
+I have not tested in any other OS's. 
+	
 ### Slave Configuration Example - Declared in Sites.pp or the like
 
 	include replicate
@@ -86,23 +114,6 @@ Declare DNS stuff once, preferably in your first SQL server instance:
 		master_fqdn					=> 'master.mysql.com',
 		master_ip					=> '192.168.1.67',
 		master_alias				=> 'scrappy',
-
-## Replication Module Overview
-
-#### Compliant!
-Module leverages a defined type class for either 'slave' or 'master' configuration. 
-
-Compliant with puppet 2.7x and MySQL 5.1x (uses CHANGE MASTER TO not 'master-host' definitions in my.cnf)
-
-#### /etc/hosts config
-The alias, IP and FQDN variables for slave and master settings are for updates to the /etc/hosts file. Add these variables if you'd like your /etc/hosts to be automatically updated with network DNS information for your master-slave relationship, otherwise leave out. 
-
-#### my.cnf configuration
-Currently using a template located in /files but will be moving out into /templates once I build out the ERB definitions. Will accept server_id and mysql_database
-from the 'replicate' module and server settings from mysql::params update based on $type. Right now it's a straight up file, edit at will if needed, located in /replicate/files
-
-#### Multi-SQL Capable
-Declare as many instances of replicate::slave or replicate::master as you'd like. 
 
 ### Accepted variables:
 	#### Global variables:
