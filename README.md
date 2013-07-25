@@ -38,8 +38,9 @@ I have not tested in any other OS's.
 
 I use InnoDB, if you're using MyISAM or other you'll need to modify the my.cnf.erb template.
 
-Since this was created to run multiple servers on one machine your slave or master will have it's own /etc/, datadir, .sock, .pid, my.cnf, and log directory as follows:
+Since this was created to run multiple servers on one machine your slave or master will have it's own /etc/, datadir, .sock, .pid, my.cnf, and log directories.
 
+$slave_server_id (OR $master_server_id) is the identifier in my.cnf for the following:
 	/etc location 	=> /etc/mysql[$slave_server_id]/
 	my.cnf			=> /etc/mysql[$slave_server_id]/my[$slave_server_id].cnf
 	port			=> 30[$slave_server_id]
@@ -49,13 +50,13 @@ Since this was created to run multiple servers on one machine your slave or mast
 	log				=> /var/log/mysql[$slave_server_id]/mysql[$slave_server_id].log
 	log_error		=> /var/log/mysql[$slave_server_id]/mysql[$slave_server_id]_error.log
 	log_bin			=> /var/log/mysql[$slave_server_id]/mysql[$slave_server_id]-bin.log
-	relay_lot		=> /var/log/mysql[$slave_server_id]/mysql[$slave_server_id]-relay-bin.log
+	relay_log		=> /var/log/mysql[$slave_server_id]/mysql[$slave_server_id]-relay-bin.log
 
 ### Post-Run
 
-Right now you pass a password but I have not set this on the SQL instance so once you connect SET THE PASSWORD
+Right now you pass a password but I have not set this on the SQL instance so once you connect SET THE PASSWORD!
 
-Connect to mysql[$slave_server_id] with:
+Connect to mysql[$slave_server_id] or mysql[$master_server_id] with:
 
 	mysql -uroot --socket=/var/run/mysqld/mysqld[$slave_server_id].sock 
 
@@ -129,24 +130,12 @@ To stop an instance:
 		}
 
 When declaring multiple SQL instances ensure $name is different!
-
-$slave_server_id is the identifier in my.cnf for the following:
-
-	[mysqld<$slave_server_id>]
-	pid-file 	= /var/run/mysqld/mysqld<%= @slave_server_id %>.pid
-	socket   	= /var/run/mysqld/mysqld<%= @slave_server_id %>.sock
-	port    	= 330<%= @slave_server_id %>
-	datadir 	= /var/lib/mysql<%= @slave_server_id %>
-	log_bin 	= /var/log/mysql/mysql<%= @slave_server_id %>-bin.log
-	relay_log 	= /var/lib/mysql/mysql<%= @slave_server_id %>-relay-bin.log
 	
 Declare DNS stuff once, preferably in your first SQL server instance:
 
 		master_fqdn					=> 'master.mysql.com',
 		master_ip					=> '192.168.1.67',
 		master_alias				=> 'scrappy',
-		
-
 
 ### Accepted variables:
 	#### Global variables:
