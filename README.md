@@ -41,6 +41,7 @@ I use InnoDB, if you're using MyISAM or other you'll need to modify the my.cnf.e
 Since this was created to run multiple servers on one machine your slave or master will have it's own /etc/, datadir, .sock, .pid, my.cnf, and log directories.
 
 $slave_server_id (OR $master_server_id) is the identifier in my.cnf for the following:
+
 	/etc location 	=> /etc/mysql[$slave_server_id]/
 	my.cnf			=> /etc/mysql[$slave_server_id]/my[$slave_server_id].cnf
 	port			=> 30[$slave_server_id]
