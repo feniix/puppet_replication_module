@@ -1,0 +1,55 @@
+# FILE MANAGED BY PUPPET
+
+[client]
+port 	= 3306
+socket	= /var/run/mysqld/mysqld.sock
+
+[mysqld]
+user    = mysql
+pid-file  = /var/run/mysqld/mysqld.pid
+socket    = /var/run/mysqld/mysqld.sock
+port      = 3306
+basedir   = /usr
+datadir   = /var/lib/mysql
+tmpdir    = /tmp
+skip-external-locking
+
+bind-address    = 127.0.0.1 
+ 
+key_buffer 				= 256M
+max_allowed_packet 		= 1M
+table_cache 			= 256
+sort_buffer_size 		= 1M
+read_buffer_size 		= 1M
+read_rnd_buffer_size 	= 4M
+myisam_sort_buffer_size = 64M
+thread_cache_size 		= 8
+query_cache_size 		= 16M
+thread_concurrency 		= 16
+#bind-address 			= 0.0.0.0
+log_error				= /var/log/mysql/error.log
+log_bin 				= /var/log/mysql/mysql-bin.log
+binlog-do-db			= classicmodels
+server-id				= 2 #<%= master_server_id %>
+expire_logs_days 		= 0
+max_binlog_size 		= 100M
+binlog_do_db 			= billiards
+max_connections 		= 250
+ 
+innodb_file_per_table
+innodb_buffer_pool_size 		= 128M
+innodb_additional_mem_pool_size = 20M
+innodb_log_file_size 			= 128M
+innodb_log_buffer_size 			= 16M
+innodb_data_home_dir=
+innodb_data_file_path			= /var/lib/mysql/ibdata1:10M:autoextend
+# For emergency -- cron handler taking too long.
+innodb_lock_wait_timeout 		= 50
+ 
+slow_query_log		= 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time		=10
+ 
+[mysqld_safe]
+socket    = /var/run/mysqld/mysqld.sock
+nice    = 0

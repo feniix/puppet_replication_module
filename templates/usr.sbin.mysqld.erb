@@ -1,0 +1,11 @@
+  # Allow <%= @name %> bitch!
+  /var/lib/mysql<%= @slave_server_id %>/ r,
+  /var/lib/mysql<%= @slave_server_id %>/** rwk,
+  /var/log/mysql<%= @slave_server_id %>/* rw,
+  /etc/mysql<%= @slave_server_id %>/* r,
+  /var/run/mysqld/* rw,
+  /var/run/mysqld/mysqld<%= @slave_server_id %>.pid w,
+  /var/run/mysqld/mysqld<%= @slave_server_id %>.sock w,
+  /run/mysqld/* rw,
+  /run/mysqld/mysqld<%= @slave_server_id %>.pid rw,
+  /run/mysqld/mysqld<%= @slave_server_id %>.sock rw,
