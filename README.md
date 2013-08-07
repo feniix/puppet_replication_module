@@ -71,7 +71,7 @@ To stop an instance:
 	
 ### Slave Configuration Example - Declared in Sites.pp or the like
 
-	include replicate
+	include replicate				# 'include replicate' only required by replicate::slave calls
 	replicate::type {'slave':
 		mysql_database				=> 'slave',
 		master_host 				=> 'master.mysql.com',
@@ -88,7 +88,8 @@ To stop an instance:
 		
 ### Master Configuration Example 
 
-	include replicate
+DO NOT 'include replicate' for replicate::master 
+
 	replicate::type {'master':
 		mysql_database				=> 'master',
 		mysql_root_password 		=> 'pass',
@@ -98,6 +99,7 @@ To stop an instance:
 		slave_ip					=> '10.0.2.15', 
 		slave_aliasq 				=> 'replicate',
 		master_server_id			=> '12',
+		bind_address				=> '127.0.0.1',
 		}
 		
 ### Multi-SQL Server - Mutli-Slave Example
