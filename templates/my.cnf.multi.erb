@@ -16,15 +16,16 @@ basedir   	= /usr
 datadir   	= /var/lib/mysql<%= @slave_server_id %>
 tmpdir    	= /tmp
 skip-external-locking
-bind-address= 127.0.0.1
-
-
+<% if @bind_address %>
+bind-address = <%= @bind_address %>
+<% else %>
+bind-address = 127.0.0.1
+<% end %>
 <% if @default_engine %>
 default-storage-engine = <%= @default_engine %>
 <% else %>
 default-storage-engine = innodb
 <% end %>
- 
 key_buffer 				= 256M
 max_allowed_packet 		= 1M
 table_cache 			= 256
@@ -38,8 +39,8 @@ thread_concurrency 		= 16
 
 log					= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>.log
 log_error 			= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>_error.log
-log_bin 			= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>-bin.log
-relay_log 			= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>-relay-bin.log
+log_bin 			= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>-bin
+relay_log 			= /var/log/mysql<%= @slave_server_id %>/mysql<%= @slave_server_id %>-relay-bin
 log_slave_updates 	= 1
 read_only 			= 1
 server-id 			= <%= @slave_server_id %>

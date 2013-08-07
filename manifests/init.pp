@@ -5,7 +5,7 @@
 # Puppet forge mysql module compliant
 #
 # Usage:
-#
+#	include replicate
 #	replicate:slave { '$name':
 #		master_host 				=> 'my.master.com',
 #		master_log_file				=> 'mysql-bin.0003',	
@@ -26,22 +26,38 @@
 #		
 # "any problem in computer science can be solved with enough layers of indirection"
 #
-class replicate inherits replicate::params {
+class replicate {
+include replicate::params
+
 
 class {'mysql::server': 
-	config_hash =>  { 'root_password' => 'shd123' },
-	#stage		=> 'first',
+	config_hash =>  { 'root_password' => "${mysql_root_password}" },
 	}
-
+	
 package {'libaio1':
 	ensure => present,
 	}
 
-# I HATE APPARMOR!
-$apparmor=['apparmor', 'apparmor-utils', 'libapparmor-perl', 'libapparmor1']
-package {$apparmor:
-	ensure => purged,
-	}
+$apparmor_pkg =['apparmor', 'apparmor-utils', 'libapparmor-perl', 'libapparmor1']
 
-	
+exec {'stop apparmor':
+	command	=> "/etc/init.d/apparmor stop && /etc/init.d/apparmor teardown",
+	notify 	=> Package[$apparmor_pkg],
+	onlyif	=> '/usr/bin/test -e /etc/init.d/apparmor',
+	}
+package {$apparmor_pkg:
+	ensure 		=> purged,
+	notify		=> Exec['update-rc.d -f apparmor remove'],
+	subscribe 	=> Exec['stop apparmor'],
+	require		=> Exec['stop apparmor'],
+	}
+exec {'update-rc.d -f apparmor remove':
+	path 		=> '/usr/sbin:/var/lib',
+	command		=> 'update-rc.d -f apparmor remove',
+	refreshonly => true,
+	#onlyif	=> '/usr/bin/test -d /etc/init.d/apparmor',
+	}
+notify {"Apparmor is disabled & purged":
+	require => [Package[$apparmor_pkg], Exec['update-rc.d -f apparmor remove']],
+	}
 }	
