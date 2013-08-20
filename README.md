@@ -140,6 +140,78 @@ Declare DNS stuff once, preferably in your first SQL server instance:
 		master_ip					=> '192.168.1.67',
 		master_alias				=> 'scrappy',
 
+#### Dump DB with Replicate::dump:
+
+Default settings are:
+	
+		all_databases 	=> "true"
+		password		=> "false"
+		
+Output file:
+
+		/tmp/{$name}.sql
+
+For dumping all the databases:
+
+		replicate::dump{'classicmodels': # 'classicmodels' = $name = $database - in this case all_databases are true so this is ignored, but still give it a name
+			user	=> "root",
+		}
+		
+The above will dump your entire mysql database to /tmp/classicmodels.sql
+
+Dumping with root password set:
+		
+		replicate::dump{'classicmodels': # 'classicmodels' = $name = $database - in this case all_databases are true so this is ignored, but still give it a name
+			user		=> "root",
+			password	=> "pa$$word",
+		}
+		
+Dumping specific database (classicmodels) with password:
+
+		replicate::dump{'classicmodels': # 'classicmodels' = $name = $database 
+			user			=> "root",
+			password		=> "pa$$word",
+			all_databases	=> "false",
+		}
+		
+Dumping multiple databases with password:
+		
+		replicate::dump{'classicmodels': # 'classicmodels' = $name = $database 
+			user			=> "root",
+			password		=> "pa$$word",
+			all_databases	=> "false",
+		}
+		
+		replicate::dump{'importantData': # 'classicmodels' = $name = $database
+			user			=> "root",
+			password		=> "pa$$word",
+			all_databases	=> "false",
+		}
+		
+		replicate::dump{'yetMoreData': # 'classicmodels' = $name = $database 
+			user			=> "root",
+			password		=> "pa$$word",
+			all_databases	=> "false",
+		}
+
+#### Dump DB + Push to Slave Instance with replicate::dump:
+Dumping database to a remote slave:
+
+On the slave you need to ensure 'remote_user' has proper mysql privileges:
+
+	mysql> GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'%' WITH GRANT OPTION;
+	
+Then pass remote_slave (a fully qualified domain name), remote_user and remote_password (the remote_user's password):
+
+		replicate::dump{'classicmodels':
+			user			=> "root",
+			password		=> "pa$$word",
+			remote_slave	=> "replicate.slave.dev",
+			remote_user		=> "repl",
+			remote_password	=> "pa$$word",
+			}	
+			
+
 ### Accepted variables:
 	#### Global variables:
 	$mysql_root_user - defaults root

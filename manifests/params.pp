@@ -15,7 +15,7 @@ class replicate::params {
 	
 	# MySQL Command Variables
 	$mysql_root_user 			= 'root'
-	$mysql_root_password 		= 'UNSET'
+	$mysql_root_password 		= 'false' # Default to no mysql password
 	$mysql_database		 		= 'UNSET'
 	$mysql_root_local_host 		= 'localhost'
 	

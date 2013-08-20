@@ -35,7 +35,7 @@ define replicate::master (
 	$slave_ip,						
 	$slave_alias,	
 	$apparmor						= 'true', # Sure, let's keep this shitty service as defualt - just in case!   	
-	$bind_address,
+	$bind_address					= '0.0.0.0', # Default for master
 	#$mysql_option_file				= '/etc/mysql/my.cnf',			
 	){
 	$mysql_cmd_root_without_pwd = "/usr/bin/mysql --user=$mysql_root_user --database=$mysql_database --host=$mysql_root_local_host"
@@ -69,7 +69,9 @@ define replicate::master (
      		'mysqld/innodb_flush_log_at_trx_commit':
      			value  	=> "1";
      		'mysqld/skip-external-locking':
-     			ensure	=> "absent"
+     			ensure	=> "absent";
+     		'mysqld/binlog-do-db':
+     			ensure	=> "$mysql_database";
  			}
 			
 		####	

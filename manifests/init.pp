@@ -29,7 +29,6 @@
 class replicate {
 include replicate::params
 
-
 class {'mysql::server': 
 	config_hash =>  { 'root_password' => "${mysql_root_password}" },
 	}

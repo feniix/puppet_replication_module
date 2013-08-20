@@ -23,7 +23,8 @@ define replicate::slave (
 	$slave_alias	   				= $replicate::params::slave_alias,
 	$apparmor						= $replicate::params::apparmor,
 	$bind_address,
-    $ensure       = "running"
+    $ensure       					= "running",
+    $import							= "false",
 	){
 	require replicate
 	
@@ -38,6 +39,9 @@ define replicate::slave (
     $datadir      				= "/var/lib/mysqld${slave_server_id}"
     $tmpdir       				= "/var/tmp/mysqld${slave_server_id}"
 	
+	stage {"import":}
+	Stage["main"] -> Stage["import"]
+		
 	if $master_fqdn != "UNSET" {
 		host { $master_fqdn:
    			ensure 			=> 'present',       
@@ -54,21 +58,6 @@ define replicate::slave (
 
 		# Remove old crap:
 		replicate::purge_old_logs{$name:}->
-		
-		# APPARMOR Config - if you need Apparmor, uncomment this section - I never got it to work even after writing correct paths
-		#file { "${name}.usr.sbin.mysqld":
-		#	ensure	=> file,
-		#	path	=> "/tmp/${name}.usr.sbin.mysqld",
-		#	content	=> template('replicate/usr.sbin.mysqld.erb'),
-		#	}~>
-		#exec { "Insert ${name} paths to usr.sbin.mysqld":
-		#	path	=> '/usr/bin:/bin',
-		#	command	=> "sed -i '/{/r /tmp/${name}.usr.sbin.mysqld' /etc/apparmor.d/usr.sbin.mysqld",
-		#	}~>
-		#exec { "${name} apparmor restart":
-		#	command	=> '/etc/init.d/apparmor restart',
-		#	require	=> Exec["Insert ${name} paths to usr.sbin.mysqld"],
-		#	}~>
 			
 		# All SQL instances get their own directories:
 		file { "/var/lib/mysql${slave_server_id}":
@@ -114,29 +103,65 @@ define replicate::slave (
 			require	=> [Exec["${name} Initialize Database"],File["my${slave_server_id}.cnf"]],
 			}	
 		
-		# Execute CHANGE MASTER TO
-		# Grant slave user priviledges 	
-		exec {"grant ${name} privledges":
-    		command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '$mysql_replication_user'@'$slave_ip' IDENTIFIED BY '$mysql_replication_password';\"",
-    		require		=> Exec["Spin up ${name} SQL server"],
-    		}
+		# Execute CHANGE MASTER TO - TODO: add if conditional for with password mysql commands
+		# Grant slave user priviledges if without password:
 		
-		exec {"stop ${name}":
-			command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"STOP SLAVE;\"",
-			require		=> Exec["grant ${name} privledges"],
-			}
-		exec {"master info for ${name}":
-	   		command	=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"CHANGE MASTER TO MASTER_HOST='$master_host',MASTER_USER='$mysql_replication_user',MASTER_PASSWORD='$mysql_replication_password',MASTER_LOG_FILE='$master_log_file',MASTER_LOG_POS=$master_log_pos;\"",
-    		require	=> Exec["stop ${name}"],
-    		}
-    	exec {"start ${name} instnace on server":
-			command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"START SLAVE;\"",
-			require		=> Exec["master info for ${name}"],
-			}
-		exec {"restart ${name} server":
-			command	=> "/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock stop;
-						/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock start",
-			require	=> Exec["start ${name} instnace on server"],
-			}
-    	}
-			
+		if $mysql_root_password == "false"{ 	
+			exec {"grant ${name} privledges":
+				command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '$mysql_replication_user'@'$slave_ip' IDENTIFIED BY '$mysql_replication_password';\"",
+				require		=> Exec["Spin up ${name} SQL server"],
+				}
+		
+			exec {"stop ${name}":
+				command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"STOP SLAVE;\"",
+				require		=> Exec["grant ${name} privledges"],
+				}
+			exec {"master info for ${name}":
+				command	=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"CHANGE MASTER TO MASTER_HOST='$master_host',MASTER_USER='$mysql_replication_user',MASTER_PASSWORD='$mysql_replication_password',MASTER_LOG_FILE='$master_log_file',MASTER_LOG_POS=$master_log_pos;\"",
+				require	=> Exec["stop ${name}"],
+				}
+			exec {"start ${name} instnace on server":
+				command		=> "$mysql_cmd_root_without_pwd $mysql_socket --execute=\"START SLAVE;\"",
+				require		=> Exec["master info for ${name}"],
+				}
+			exec {"restart ${name} server":
+				command	=> "/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock stop;
+							/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock start",
+				require	=> Exec["start ${name} instnace on server"],
+				notify	=> Replicate::Import["Import ${import} onto ${name}"],
+				}
+		   }
+		if $mysql_root_password != "false"{ 	
+			exec {"grant ${name} privledges":
+				command		=> "$mysql_cmd_root_with_pwd $mysql_socket --execute=\"GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '$mysql_replication_user'@'$slave_ip' IDENTIFIED BY '$mysql_replication_password';\"",
+				require		=> Exec["Spin up ${name} SQL server"],
+				}
+		
+			exec {"stop ${name}":
+				command		=> "$mysql_cmd_root_with_pwd $mysql_socket --execute=\"STOP SLAVE;\"",
+				require		=> Exec["grant ${name} privledges"],
+				}
+			exec {"master info for ${name}":
+				command	=> "$mysql_cmd_root_with_pwd $mysql_socket --execute=\"CHANGE MASTER TO MASTER_HOST='$master_host',MASTER_USER='$mysql_replication_user',MASTER_PASSWORD='$mysql_replication_password',MASTER_LOG_FILE='$master_log_file',MASTER_LOG_POS=$master_log_pos;\"",
+				require	=> Exec["stop ${name}"],
+				}
+			exec {"start ${name} instnace on server":
+				command		=> "$mysql_cmd_root_with_pwd $mysql_socket --execute=\"START SLAVE;\"",
+				require		=> Exec["master info for ${name}"],
+				}
+			exec {"restart ${name} server":
+				command	=> "/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock stop;
+							/usr/bin/mysqladmin -S /var/run/mysqld/mysqld${slave_server_id}.sock start",
+				require	=> Exec["start ${name} instnace on server"],
+				notify	=> Replicate::Import["Import ${import} onto ${name}"],
+				}
+		   }
+		
+		replicate::import{"Import ${import} onto ${name}":
+			import				=> $import,
+			server_id			=> $slave_server_id,
+			socket				=> $socket,
+			password			=> $mysql_root_password,
+			user				=> "root",
+		}	
+}
