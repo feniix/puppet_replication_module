@@ -115,6 +115,9 @@ DO NOT 'include replicate' for replicate::master
 		mysql_replication_user 		=> 'repl',
 		mysql_replication_password	=> 'pass',
 		
+		# If you're importing a DB dumped from master and transfered to this slave node:
+		import						=> '/path/to/your/database.sql',
+		
 		# Only declare these on your first MySQL server instance, for DNS purposes
 		master_fqdn					=> 'master.mysql.com',
 		master_ip					=> '192.168.1.67',
@@ -210,6 +213,28 @@ Then pass remote_slave (a fully qualified domain name), remote_user and remote_p
 			remote_user		=> "repl",
 			remote_password	=> "pa$$word",
 			}	
+			
+### Custom commands to start, stop and connect to slave instances
+
+To start & stop the custom SQL slaves use mysqladmin with the socket the slave is running (example uses slave running with server-id '11'):
+	
+	root@replicate:/home/vagrant# mysqladmin --socket=/var/run/mysqld/mysqld11.sock start
+	Slave started
+	root@replicate:/home/vagrant# mysqladmin --socket=/var/run/mysqld/mysqld11.sock stop
+	Slave stopped	
+	
+To connect to the custom SQL slave use mysql_safe binary connection with --socket (example uses slave running with server-id '11'):
+
+	root@replicate:/home/vagrant# mysql -uroot --socket=/var/run/mysqld/mysqld11.sock 
+	Welcome to the MySQL monitor.  Commands end with ; or \g.
+	Your MySQL connection id is 93
+	Server version: 5.5.32-0ubuntu0.12.04.1-log (Ubuntu)
+	Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+
+	Oracle is a registered trademark of Oracle Corporation and/or its
+	affiliates. Other names may be trademarks of their respective
+	owners.
+
 			
 
 ### Accepted variables:
